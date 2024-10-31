@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>CRM Система</title>
+    <style>
+        .currency {
+            position: absolute;
+            padding-left: 10px;
+            padding-top: 8px;
+            color: #aaa;
+        }
+        .input-group {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <header class="d-flex justify-content-between align-items-center mb-4">
+            <h1>CRM Система</h1>
+            <h2 id="capital">Капитал: $<span id="capitalAmount">25,000</span></h2>
+        </header>
+
+        <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addClientModal">
+            Добавить кредит
+        </button>
+        <button class="btn btn-info mb-3" data-toggle="modal" data-target="#historyModal">
+            Просмотреть историю кредитов
+        </button>
+        <button class="btn btn-danger mb-3" data-toggle="modal" data-target="#adminModal">
+            Панель администратора
+        </button>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Клиент</th>
+                    <th>Сумма кредита</th>
+                    <th>Статус</th>
+                    <th>Дата начала</th>
+                    <th>Дата окончания</th>
+                    <th>Процентная ставка</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="clientTableBody">
+                <!-- Данные о клиентах будут добавлены сюда -->
+            </tbody>
+        </table>
+
+        <h3>Статистика</h3>
+        <p>Общая сумма вложений: $<span id="totalInvested">0</span></p>
+        <p>Общая процентная доходность: <span id="totalInterest">0%</span></p>
+        <p>Итоговая сумма доходов: $<span id="totalIncome">0</span></p>
+    </div>
+
+    <!-- Модальное окно для добавления клиента -->
+    <div class="modal fade" id="addClientModal" tabindex="-1" role="dialog" aria-labelledby="addClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addClientModalLabel">Добавить клиента</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addClientForm">
+                        <div class="form-group">
+                            <label for="clientName">Имя клиента</label>
+                            <input type="text" class="form-control" id="clientName" required>
+                        </div>
+                        <div class="form-group input-group">
+                            <label for="loanAmount">Сумма кредита</label>
+                            <div class="input-group">
+                                <span class="currency">$</span>
+                                <input type="number" class="form-control" id="loanAmount" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="startDate">Дата начала</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">Дата окончания</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="interestRate">Процентная ставка (%)</label>
+                            <input type="number" class="form-control" id="interestRate" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для оплаты кредита -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Оплатить кредит</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="paymentForm">
+                        <div class="form-group">
+                            <label for="paymentAmount">Сумма оплаты</label>
+                            <input type="number" class="form-control" id="paymentAmount" required>
+                        </div>
+                        <input type="hidden" id="currentClientIndex">
+                        <button type="submit" class="btn btn-primary">Оплатить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для истории кредитов -->
+    <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="historyModalLabel">История кредитов</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Клиент</th>
+                                <th>Сумма кредита</th>
+                                <th>Дата погашения</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Данные об истории будут добавлены сюда -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для панели администратора -->
+    <div class="modal fade" id="adminModal" tabindex="-1" role="dialog" aria-labelledby="adminModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminModalLabel">Панель администратора</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="adminForm">
+                        <div class="form-group">
+                            <label for="adminPassword">Пароль</label>
+                            <input type="password" class="form-control" id="adminPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Войти</button>
+                    </form>
+                    <div id="adminActions" class="mt-3" style="display:none;">
+                        <h5>Одобрение кредитов</h5>
+                        <ul id="pendingClients" class="list-group"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        let capital = parseFloat(localStorage.getItem('capital')) || 25000;
+        let clients = JSON.parse(localStorage.getItem('clients')) || [];
+        let history = JSON.parse(localStorage.getItem('history')) || [];
+        let totalInvested = 0;
+        let totalInterest = 0;
+        const adminPassword = 'incodertoconsole';
+
+        function updateCapitalDisplay() {
+            document.getElementById('capitalAmount').innerText = capital.toFixed(2);
+        }
+
+        function renderClients() {
+            const tableBody = document.getElementById('clientTableBody');
+            tableBody.innerHTML = '';
+            clients.forEach((client, index) => {
+                const status = client.approved ? 'Одобрен' : 'На одобрении';
+                const actions = client.approved ? `
+                    <button class="btn btn-warning btn-sm" onclick="showPaymentModal(${index})">Оплатить</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteClient(${index})">Удалить</button>
+                ` : '<button class="btn btn-secondary btn-sm" disabled>На одобрении</button>';
+                const newRow = `<tr>
+                    <td>${client.name}</td>
+                    <td>$${client.amount.toFixed(2)}</td>
+                    <td>${status}</td>
+                    <td>${client.startDate}</td>
+                    <td>${client.endDate}</td>
+                    <td>${client.interestRate}%</td>
+                    <td>${actions}</td>
+                </tr>`;
+                tableBody.innerHTML += newRow;
+            });
+            updateStatistics();
+            updateCapitalDisplay();
+        }
+
+        function updateStatistics() {
+            totalInvested = clients.reduce((acc, client) => acc + client.amount, 0);
+            totalInterest = clients.reduce((acc, client) => acc + (client.amount * client.interestRate / 100), 0);
+            document.getElementById('totalInvested').innerText = totalInvested.toFixed(2);
+            document.getElementById('totalInterest').innerText = `${((totalInterest / totalInvested) * 100).toFixed(2)}%`;
+            document.getElementById('totalIncome').innerText = (totalInvested + totalInterest).toFixed(2);
+        }
+
+        document.getElementById('addClientForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const clientName = document.getElementById('clientName').value;
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const interestRate = parseFloat(document.getElementById('interestRate').value);
+
+            if (loanAmount > capital) {
+                alert('Недостаточно капитала для выдачи кредита.');
+                return;
+            }
+
+            clients.push({ name: clientName, amount: loanAmount, startDate, endDate, interestRate, approved: false });
+            localStorage.setItem('clients', JSON.stringify(clients));
+
+            $('#addClientModal').modal('hide');
+            this.reset();
+            renderClients();
+        });
+
+        function deleteClient(index) {
+            capital += clients[index].amount;
+            clients.splice(index, 1);
+            localStorage.setItem('clients', JSON.stringify(clients));
+            renderClients();
+        }
+
+        function showPaymentModal(index) {
+            document.getElementById('currentClientIndex').value = index;
+            $('#paymentModal').modal('show');
+        }
+
+        document.getElementById('paymentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const index = parseInt(document.getElementById('currentClientIndex').value);
+            const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+
+            if (paymentAmount >= clients[index].amount) {
+                const client = clients[index];
+                history.push({
+                    name: client.name,
+                    amount: client.amount,
+                    repaymentDate: new Date().toLocaleDateString()
+                });
+                localStorage.setItem('history', JSON.stringify(history));
+                capital += clients[index].amount;
+                clients.splice(index, 1);
+            } else {
+                clients[index].amount -= paymentAmount;
+            }
+
+            localStorage.setItem('clients', JSON.stringify(clients));
+            $('#paymentModal').modal('hide');
+            renderClients();
+        });
+
+        function renderHistory() {
+            const historyTableBody = document.getElementById('historyTableBody');
+            historyTableBody.innerHTML = '';
+            history.forEach(entry => {
+                const newRow = `<tr>
+                    <td>${entry.name}</td>
+                    <td>$${entry.amount.toFixed(2)}</td>
+                    <td>${entry.repaymentDate}</td>
+                </tr>`;
+                historyTableBody.innerHTML += newRow;
+            });
+        }
+
+        document.getElementById('historyModal').addEventListener('show.bs.modal', function () {
+            renderHistory();
+        });
+
+        document.getElementById('adminForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const password = document.getElementById('adminPassword').value;
+
+            if (password === adminPassword) {
+                document.getElementById('adminActions').style.display = 'block';
+                renderPendingClients();
+                $('#adminModal').modal('hide');
+            } else {
+                alert('Неверный пароль!');
+            }
+        });
+
+        function renderPendingClients() {
+            const pendingClientsList = document.getElementById('pendingClients');
+            pendingClientsList.innerHTML = '';
+            clients.forEach((client, index) => {
+                if (!client.approved) {
+                    const newListItem = `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${client.name} - $${client.amount.toFixed(2)}
+                        <button class="btn btn-success btn-sm" onclick="approveClient(${index})">Одобрить</button>
+                    </li>`;
+                    pendingClientsList.innerHTML += newListItem;
+                }
+            });
+        }
+
+        function approveClient(index) {
+            clients[index].approved = true;
+            capital -= clients[index].amount; // Уменьшаем капитал при одобрении
+            localStorage.setItem('clients', JSON.stringify(clients));
+            renderClients();
+            renderPendingClients();
+        }
+
+        // Сохранение и восстановление капитала
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('capital', capital);
+        });
+
+        updateCapitalDisplay();
+        renderClients();
+    </script>
+</body>
+</html>
